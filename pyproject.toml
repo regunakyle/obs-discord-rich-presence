@@ -1,0 +1,19 @@
+[project]
+name = "obs-discord-rich-presence"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+license = "GNU GPLv3"
+authors = [{ name = "Eric Leung", email = "contact@ericleung.dev" }]
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = ["ipykernel", "ruff", "pyright"]
+
+[tool.pyright]
+pythonVersion = "3.12"
+include = ["obs_discord_rich_presence.py"]
+stubPath = "."
+extraPaths = ["vendor/pypresence"]
+reportMissingModuleSource = false

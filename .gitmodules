@@ -1,0 +1,3 @@
+[submodule "vendor/pypresence"]
+	path = vendor/pypresence
+	url = https://github.com/qwertyquerty/pypresence.git

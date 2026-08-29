@@ -1,0 +1,63 @@
+name: Package release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Package OBS script + pypresence + guide
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Assemble package
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          # Sanitize tag/branch names for use in a file name.
+          version="$(echo "$VERSION" | sed 's/[^A-Za-z0-9._-]/-/g')"
+          staging="dist/obs-discord-rich-presence"
+          mkdir -p "$staging"
+
+          cp obs_discord_rich_presence.py "$staging/"
+          cp README.md "$staging/"
+          # GPLv3 section 4: a copy of the license must accompany the
+          # distributed Program.
+          cp LICENSE.md "$staging/"
+          cp -r vendor/pypresence/pypresence "$staging/pypresence"
+          # The MIT license requires pypresence's copyright notice to
+          # accompany the distributed package (the package directory
+          # itself contains no LICENSE file).
+          cp vendor/pypresence/LICENSE "$staging/pypresence/LICENSE"
+
+          # Keep the archive clean of caches and build artifacts.
+          find "$staging" -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+          find "$staging" -name "*.pyc" -delete
+
+          echo "version=$version" >> "$GITHUB_ENV"
+          cd dist
+          zip -r "obs-discord-rich-presence-${version}.zip" obs-discord-rich-presence
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: obs-discord-rich-presence-${{ env.version }}
+          path: dist/*.zip
+          if-no-files-found: error
+
+      - name: Create GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
