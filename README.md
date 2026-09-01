@@ -22,7 +22,7 @@ You only need to install Python to use this script.
 - Windows with the **Discord desktop app** running while you stream.
 - A Python installation for OBS scripting.
 
-  Any Python version between 3.9 to 3.12 should work.
+  Any Python version between 3.9 and 3.12 should work.
 
   Python 3.12 can be downloaded [here](https://www.python.org/downloads/release/python-31210/) (Remember to tick *Add python.exe to PATH*).
 
@@ -47,7 +47,7 @@ You only need to install Python to use this script.
 
 With the script selected, fill in the settings:
 
-| Setting | Meaning | Suggested Value |
+| Setting | Meaning | Example Value |
 | --- | --- | --- |
 | Discord Application ID | (REQUIRED) The Application ID from [step 1](#1-create-a-discord-application) | |
 | Application Name | Optional app name override; Discord uses the app name as defined in Developer Portal if this field is not set | Your stream title |
@@ -70,7 +70,7 @@ Empty fields are simply left out of the presence. A button is only shown when bo
 
 ![Example](./ui.png)
 
-**(NOTE: You cannot see the buttons in your own rich presence. Check the buttons with another account)**
+**(NOTE: You cannot see the buttons in your own rich presence. Check them with another account)**
 
 The settings are stored locally, updated as you type.
 
@@ -78,7 +78,7 @@ However, modified settings are not automatically pushed to Discord: you need to 
 
 ## Troubleshooting
 
-All messages appear either in the script log at the bottom of the Scripts window  in the main OBS log file (`Tools → Log Files`).
+All messages appear either in the script log at the bottom of the Scripts window or in the main OBS log file (`Tools → Log Files`).
 
 - **Nothing happens:** check the script log for warnings. The most common cause is a missing or wrong Application ID — the script shows a warning in its settings while the Application ID is empty (OBS 29.1+).
 - **`Could not connect to Discord (...)`:** make sure the Discord desktop app is running and logged in. The script keeps retrying.

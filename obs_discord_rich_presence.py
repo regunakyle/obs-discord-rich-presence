@@ -138,34 +138,27 @@ _FIELD_LABELS: dict[str, str] = {
 _FIELD_TOOLTIPS: dict[str, str] = {
     _NAME: "Optional name sent with the presence. Discord normally "
     "shows the application name configured in the Developer Portal; "
-    "whether this value is used varies by Discord client. Two to 256 "
-    "characters; empty omits the field.",
+    "Two to 256 characters; empty omits the field.",
     _DETAILS: "First line of the presence text, shown under the "
     "application name. Two to 128 characters; empty omits the line.",
     _DETAILS_URL: "Link opened when the viewer clicks the details text. "
-    "Whether Discord renders text links varies by client and "
-    "application; buttons are the reliable alternative. Up to 256 "
-    "characters.",
+    "Up to 256 characters.",
     _STATE: "Second line of the presence text. Two to 128 characters; "
     "empty omits the line.",
     _STATE_URL: "Link opened when the viewer clicks the state text. "
-    "Whether Discord renders text links varies by client and "
-    "application; buttons are the reliable alternative. Up to 256 "
-    "characters.",
+    "Up to 256 characters.",
     _LARGE_IMAGE: "Large profile image: the asset key from the "
     "application's Rich Presence art assets (two to 32 characters), "
     "or a direct image URL (up to 256 characters).",
     _LARGE_TEXT: "Text shown when hovering the large image. Two to 128 characters.",
     _LARGE_URL: "Link opened when the viewer clicks the large image. "
-    "Whether Discord renders image links varies by client and "
-    "application. Up to 256 characters.",
+    "Up to 256 characters.",
     _SMALL_IMAGE: "Small corner image: the asset key from the "
     "application's Rich Presence art assets (two to 32 characters), "
     "or a direct image URL (up to 256 characters).",
     _SMALL_TEXT: "Text shown when hovering the small image. Two to 128 characters.",
     _SMALL_URL: "Link opened when the viewer clicks the small image. "
-    "Whether Discord renders image links varies by client and "
-    "application. Up to 256 characters.",
+    "Up to 256 characters.",
     _BUTTON1_LABEL: "Label of the first clickable button under the "
     "presence. Up to 32 bytes; the button is only shown when both "
     "label and URL are set.",
@@ -436,32 +429,69 @@ class _PresenceWorker(threading.Thread):
             return
         with self._settings_lock:
             settings = dict(self._settings)
+        skipped: list[str] = []
+
+        def field(key: str) -> str | None:
+            """Return the value to send, or None when it must be omitted.
+
+            Mirrors the settings UI validation: empty omits the field,
+            and invalid values (a single character, or over the length
+            limit) are dropped instead of sent, so one bad field cannot
+            make Discord reject the entire presence.  Dropped fields
+            are named in a log warning.
+            """
+            value = settings[key]
+            if not value:
+                return None
+            if len(value) == 1 or len(value) > _FIELD_LENGTH_LIMITS.get(
+                key, len(value)
+            ):
+                skipped.append(_FIELD_LABELS[key])
+                return None
+            return value
+
         buttons: list[dict[str, str]] = []
-        for label_key, url_key in (
-            (_BUTTON1_LABEL, _BUTTON1_URL),
-            (_BUTTON2_LABEL, _BUTTON2_URL),
-        ):
+        for label_key, url_key, _error_key, name in _BUTTON_PAIRS:
             label = settings[label_key].strip()
             url = settings[url_key].strip()
-            # A button needs both a label and a URL to be valid.
-            if label and url:
-                buttons.append({"label": label, "url": url})
+            if not label and not url:
+                continue
+            # The same rules as the settings UI: a button needs both a
+            # label and a URL, each long enough and short enough.
+            if (
+                not label
+                or not url
+                or len(label) == 1
+                or len(url) == 1
+                or len(label.encode("utf-8")) > _FIELD_BYTE_LIMITS[label_key]
+                or len(url) > _FIELD_LENGTH_LIMITS[url_key]
+            ):
+                skipped.append(name)
+                continue
+            buttons.append({"label": label, "url": url})
+        if skipped:
+            _log(
+                obs.LOG_WARNING,
+                "Skipped invalid or incomplete settings: "
+                + ", ".join(skipped)
+                + ". The presence was sent without them.",
+            )
         try:
             presence.update(
                 # "Watching <application>" instead of "Playing".
                 activity_type=ActivityType.WATCHING,
                 start=self._stream_start,
-                name=settings[_NAME] or None,
-                details=settings[_DETAILS] or None,
-                details_url=settings[_DETAILS_URL] or None,
-                state=settings[_STATE] or None,
-                state_url=settings[_STATE_URL] or None,
-                large_image=settings[_LARGE_IMAGE] or None,
-                large_text=settings[_LARGE_TEXT] or None,
-                large_url=settings[_LARGE_URL] or None,
-                small_image=settings[_SMALL_IMAGE] or None,
-                small_text=settings[_SMALL_TEXT] or None,
-                small_url=settings[_SMALL_URL] or None,
+                name=field(_NAME),
+                details=field(_DETAILS),
+                details_url=field(_DETAILS_URL),
+                state=field(_STATE),
+                state_url=field(_STATE_URL),
+                large_image=field(_LARGE_IMAGE),
+                large_text=field(_LARGE_TEXT),
+                large_url=field(_LARGE_URL),
+                small_image=field(_SMALL_IMAGE),
+                small_text=field(_SMALL_TEXT),
+                small_url=field(_SMALL_URL),
                 buttons=buttons or None,
             )
         except Exception as error:

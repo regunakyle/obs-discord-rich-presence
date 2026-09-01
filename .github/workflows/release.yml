@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: recursive
 
@@ -32,6 +32,8 @@ jobs:
 
           cp obs_discord_rich_presence.py "$staging/"
           cp README.md "$staging/"
+          # The README embeds this image.
+          cp ui.png "$staging/"
           # GPLv3 section 4: a copy of the license must accompany the
           # distributed Program.
           cp LICENSE.md "$staging/"
@@ -58,6 +60,6 @@ jobs:
 
       - name: Create GitHub release
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: dist/*.zip

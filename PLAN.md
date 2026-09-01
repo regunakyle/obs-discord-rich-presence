@@ -15,7 +15,7 @@ An OBS Studio Python script that starts a Discord rich presence when a stream st
    - The OBS Python API has no types, so a hand-written stub file `obspython.pyi` declares only the functions/constants the script uses.
    - `pyright` enforces typing (configured in `pyproject.toml`).
 3. **Distribution** (GitHub Actions):
-   - Package only the OBS script, the `pypresence` package, a markdown usage guide, and the license files into a zip (the GPLv3 license must accompany the distribution, and pypresence's MIT copyright notice must be kept with the vendored package).
+   - Package only the OBS script, the `pypresence` package, a markdown usage guide, the license files, and the README's example screenshot (`ui.png`) into a zip (the GPLv3 license must accompany the distribution, and pypresence's MIT copyright notice must be kept with the vendored package).
    - The script calls `pypresence` directly from the same folder (OBS adds the script directory to `sys.path`).
    - `pypresence` is self-contained (i.e. no third-party dependencies).
 
@@ -62,6 +62,7 @@ Key points:
 
 - **Why a worker thread:** `Presence.connect()` blocks up to its connection timeout. All pypresence calls must stay on one thread (it drives its own asyncio loop), so a single daemon thread owns the client; the OBS thread only enqueues commands.
 - **Retry loop:** on connect failure, retry with exponential backoff — the wait doubles after each failure from 1 s up to a 16 s cap and resets on success — while polling the queue so STOP/SHUTDOWN interrupt the wait immediately and end the retry campaign (a stream that stops mid-retry never gets a presence). The warning is logged at most once per minute, and the failed client's asyncio event loop is closed so retries do not leak loops.
+- **Send-time validation:** `_push_update` applies the same omission rules as the settings UI (empty omits the field; single-character, over-limit, and byte-over-limit values are invalid). Invalid fields are dropped instead of sent, so one bad field cannot make Discord reject the entire `SET_ACTIVITY` payload on the stream-start path (where no button guards the input); dropped fields are named in a log warning. Button label/URL are stripped before the same rules apply.
 - **Rate limit:** Discord accepts one presence update per 15 s. Presence updates only happen on stream start/stop and on explicit user action (the update button), never per keystroke, so rate-limit rejections are rare; a rejected update is caught and logged.
 - **New `Presence` instance per connect** (pypresence closes its event loop on `close()`).
 - **Settings UI:** the Application ID field lives in its own group ("Discord application") so the top-level form has no labeled rows; its label column then collapses to zero width and the centralized validation messages and the update button start at the left margin (info rows render in the form's field column via `addRow(nullptr, label)`, and Qt's `QFormLayout` sizes that column from the widest label). The Application ID field carries a modified callback that shows/hides an `OBS_TEXT_INFO` warning property while the ID is empty; the warning row sits directly under the Application ID field inside the "Discord application" group (initial visibility comes from the worker's snapshot, since `script_load` applies saved settings before the properties view is built). Info properties need OBS 29.1+ and are feature-detected; older versions get the log warning only. All other validation messages (single-character fields, incomplete buttons) are centralized in rows between the setting groups and the update button, each message naming its field. The update button is disabled (`obs_property_set_enabled`, works on any OBS version) while any message is active. Visibility/enabled callbacks compare the desired state with `obs_property_visible()`/`obs_property_enabled()` and return True only on an actual transition — returning True makes OBS destroy and rebuild the whole properties view (`RefreshProperties`), and the modified callback fires on every keystroke, so an unconditional True caused an abrupt refresh per keystroke.
@@ -76,6 +77,7 @@ Key points:
 | `obs_discord_rich_presence.py` | The OBS script |
 | `obspython.pyi` | Type stub for the used subset of `obspython` |
 | `README.md` | End-user guide, packaged in the zip |
+| `ui.png` | Example screenshot embedded by the README, packaged in the zip |
 | `LICENSE.md` | GPL-3.0 license (also declared via SPDX header in the script) |
 | `.github/workflows/release.yml` | Packaging/release workflow |
 | `pyproject.toml` | pyright config (`stubPath`, `extraPaths: vendor/pypresence`) |
@@ -106,6 +108,7 @@ Key points:
 - [x] Tooltips on every setting field (usage + Discord limits)
 - [x] Button-label byte-length validation (32 bytes)
 - [x] Max-length validation for all fields (128/256/512 per Discord limits)
+- [x] Send-time validation in `_push_update`: invalid or incomplete fields are dropped instead of sent (so one bad field cannot make Discord reject the whole presence); dropped fields are named in a log warning
 - [x] `README.md` guide
 - [x] `release.yml` packaging workflow (tag + manual dispatch)
 - [x] pyright config and clean typecheck
