@@ -1,7 +1,7 @@
 [project]
 name = "obs-discord-rich-presence"
-version = "0.1.0"
-description = "Add your description here"
+version = "v1.0.0"
+description = "OBS Python script for Discord Rich Presence"
 readme = "README.md"
 license = "GNU GPLv3"
 authors = [{ name = "Eric Leung", email = "contact@ericleung.dev" }]
