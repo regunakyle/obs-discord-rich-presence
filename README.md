@@ -1,8 +1,10 @@
-# OBS Discord Rich Presence
+# Discord Rich Presence for OBS
 
-> **Origin note:** this project is mostly LLM-generated, written with human guidance (requirements, decisions, and review).
+> **Origin note:** this project is mostly LLM-generated, written with human guidance (design, review and testing).
+>
+> [OBS rejects resources that are mostly AI written](https://obsproject.com/forum/threads/forum-resource-and-ip-policy.178569/), so this project won't be submitted to the OBS forum.
 
-An [OBS Studio](https://obsproject.com) Python script that shows a **Discord rich presence while you are streaming**.
+An OBS Python script that shows a **Discord rich presence while you are streaming**.
 The presence starts when you start streaming and stops when you stop.
 
 The script talks to your locally running Discord client over its IPC pipe using the bundled, self-contained [pypresence](https://github.com/qwertyquerty/pypresence) library.
@@ -22,9 +24,9 @@ You only need to install Python to use this script.
 - Windows with the **Discord desktop app** running while you stream.
 - A Python installation for OBS scripting.
 
-  Any Python version between 3.9 and 3.12 should work.
+  Any Python version between 3.9 and 3.12 should work. (3.13 or above won't work. This is a limitation of OBS)
 
-  Python 3.12 can be downloaded [here](https://www.python.org/downloads/release/python-31210/) (Remember to tick *Add python.exe to PATH*).
+  For Windows users: Python 3.12 can be downloaded [here](https://www.python.org/downloads/release/python-31210/) (Remember to tick *Add python.exe to PATH* during installation).
 
 ## Setup
 
@@ -53,7 +55,7 @@ With the script selected, fill in the settings:
 | Application Name | Optional app name override; Discord uses the app name as defined in Developer Portal if this field is not set | Your stream title |
 | Details | First line of the presence | Your channel name |
 | Details URL | Link opened when clicking the details text | URL of your channel |
-| State | Second line of the presence | |
+| State | Second line of the presence | Game name |
 | State URL | Link opened when clicking the state text | |
 | Large Image (key or URL) | Large profile image: an art asset key or a direct image URL | URL/Key of your channel icon |
 | Large Image Tooltip | Text shown when hovering the large image | |

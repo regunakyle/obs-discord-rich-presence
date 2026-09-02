@@ -112,8 +112,7 @@ Key points:
 - [x] `README.md` guide
 - [x] `release.yml` packaging workflow (tag + manual dispatch)
 - [x] pyright config and clean typecheck
-- [ ] Manual test in OBS Studio
-- [ ] First tagged release (`v0.1.0`) to exercise the workflow
+- [ ] Test in Linux
 
 ## Possible future work
 
